@@ -1,0 +1,57 @@
+package core
+
+// IranDirectDomains contains prominent Iranian domain suffixes and key domestic infrastructure domains
+var IranDirectDomains = []string{
+	"domain:.ir",
+	"domain:.xn--mgba3a4f16a", // Iran IDN (.ایران)
+	"geosite:ir",
+	"geosite:category-ir",
+	"geosite:category-ir-gov",
+	"geosite:category-ir-bank",
+	"geosite:category-ir-shopping",
+	"geosite:category-ir-education",
+	"geosite:category-ir-news",
+	"geosite:category-ir-media",
+	"geosite:category-ir-tech",
+	"domain:shaparak.ir",
+	"domain:divar.ir",
+	"domain:snapp.ir",
+	"domain:digikala.com",
+	"domain:torob.com",
+	"domain:aparat.com",
+	"domain:telewebion.com",
+	"domain:varzesh3.com",
+	"domain:filimo.com",
+	"domain:cafebazaar.ir",
+	"domain:myket.ir",
+	"domain:rubika.ir",
+	"domain:eitaa.com",
+	"domain:bale.ai",
+	"domain:splus.ir",
+	"domain:nobitex.ir",
+	"domain:wallex.ir",
+	"domain:abantether.com",
+	"domain:mci.ir",
+	"domain:irancell.ir",
+	"domain:rightel.ir",
+	"domain:tci.ir",
+	"domain:shatel.ir",
+	"domain:asiatech.ir",
+	"domain:parsonline.com",
+	"domain:hiweb.ir",
+}
+
+// IranDirectIPRanges contains private LAN ranges and Iran GeoIP
+var IranDirectIPRanges = []string{
+	"geoip:ir",
+	"geoip:private",
+	"10.0.0.0/8",
+	"172.16.0.0/12",
+	"192.168.0.0/16",
+	"127.0.0.0/8",
+	"100.64.0.0/10",
+	"169.254.0.0/16",
+	"::1/128",
+	"fc00::/7",
+	"fe80::/10",
+}

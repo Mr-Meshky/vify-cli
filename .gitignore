@@ -1,0 +1,14 @@
+# Build artifacts
+/bin/
+/dist/
+
+# Go
+*.test
+*.out
+
+# OS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
