@@ -71,7 +71,7 @@ var connectCmd = &cobra.Command{
 
 func init() {
 	connectCmd.Flags().StringVarP(&connectCountry, "country", "c", "", "Filter candidate servers by country code (e.g., DE, NL, US, TR)")
-	connectCmd.Flags().StringVarP(&connectProtocol, "protocol", "p", "", "Filter candidate servers by protocol (vless, vmess, trojan, ss)")
+	connectCmd.Flags().StringVarP(&connectProtocol, "protocol", "p", "", "Filter candidate servers by protocol (vless, vmess, trojan, shadowsocks/ss)")
 	connectCmd.Flags().StringVarP(&connectRawURL, "url", "u", "", "Connect directly to a specific vless/vmess/trojan/ss link")
 	connectCmd.Flags().BoolVar(&connectTun, "tun", true, "Use TUN mode (Full virtual network interface / device VPN like V2Box)")
 	connectCmd.Flags().BoolVar(&connectSysProxy, "system-proxy", false, "Use System Proxy mode instead of TUN")

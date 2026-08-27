@@ -30,6 +30,6 @@ var testCmd = &cobra.Command{
 func init() {
 	testCmd.Flags().IntVarP(&testBatchSize, "batch", "b", 40, "Maximum number of servers to benchmark")
 	testCmd.Flags().StringVarP(&testCountry, "country", "c", "", "Filter candidate servers by country code (e.g. DE, NL)")
-	testCmd.Flags().StringVarP(&testProtocol, "protocol", "p", "", "Filter candidate servers by protocol (vless, vmess, trojan, ss)")
+	testCmd.Flags().StringVarP(&testProtocol, "protocol", "p", "", "Filter candidate servers by protocol (vless, vmess, trojan, shadowsocks/ss)")
 	rootCmd.AddCommand(testCmd)
 }

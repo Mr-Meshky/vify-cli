@@ -44,13 +44,14 @@ func New() (*App, error) {
 
 // ConnectOptions contains flags for the connect command
 type ConnectOptions struct {
-	Country      string
-	Protocol     string
-	Mode         string
-	FastPass     bool
-	BatchSize    int
-	UseCacheOnly bool
-	ManualURI    string
+	Country         string
+	Protocol        string
+	Mode            string
+	FastPass        bool
+	BatchSize       int
+	UseCacheOnly    bool
+	ManualURI       string
+	PreselectedNode *model.ProxyNode
 }
 
 // RunConnect handles automatic or filtered fast-pass connection or manual config link
@@ -58,6 +59,10 @@ func (a *App) RunConnect(ctx context.Context, opts ConnectOptions) error {
 	fmt.Println(tui.TitleStyle.Render("⚡ Vify CLI — High-Speed Anti-Censorship VPN (TUN Mode)"))
 	fmt.Println(tui.SubtitleStyle.Render("Initializing VPN connection..."))
 	fmt.Println()
+
+	if err := validateProtocol(opts.Protocol); err != nil {
+		return err
+	}
 
 	// Determine Connection Mode (Default to TUN Mode)
 	connMode := model.ModeTUN
@@ -72,47 +77,13 @@ func (a *App) RunConnect(ctx context.Context, opts ConnectOptions) error {
 		if err != nil {
 			return fmt.Errorf("failed to parse config link: %w", err)
 		}
+		return a.connectToNode(ctx, node, connMode)
+	}
 
-		fmt.Printf(" %s Testing connection to %s %s (%s:%d)...\n",
-			tui.BadgeStyle.Render("TEST"),
-			node.CountryFlag,
-			node.Name,
-			node.Server,
-			node.Port,
-		)
-
-		testCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-		lat, err := ping.DialTest(testCtx, node, a.Config.TestURL)
-		cancel()
-
-		if err == nil && lat > 0 {
-			node.Latency = lat
-			node.IsHealthy = true
-			fmt.Printf(" %s Node reachable (latency: %s)\n", tui.SuccessBadge.Render("ONLINE"), tui.FormatLatency(lat.Milliseconds()))
-		} else {
-			fmt.Printf(" %s Node test warning: %v (attempting connection anyway)\n", tui.WarningBadge.Render("WARN"), err)
-		}
-
-		// The check above only confirms a raw TCP/TLS dial succeeds — it does
-		// NOT confirm the proxy protocol itself works. Actually exercise it
-		// with a real request before committing to a full session.
-		fmt.Printf(" %s Verifying real proxy handshake...\n", tui.BadgeStyle.Render("VERIFY"))
-		if realLat, verr := core.VerifyNodeReal(ctx, node, a.Config.TestURL, core.VerifyPortBase, core.VerifyPortBase+1); verr != nil {
-			fmt.Printf(" %s Real proxy check failed: %v (attempting connection anyway — this node may not work)\n", tui.WarningBadge.Render("WARN"), verr)
-		} else {
-			fmt.Printf(" %s Verified working (real latency: %s)\n", tui.SuccessBadge.Render("VERIFIED"), tui.FormatLatency(realLat.Milliseconds()))
-		}
-
-		fmt.Printf("\n %s Activating %s mode...\n",
-			tui.BadgeStyle.Render("CONNECT"),
-			strings.ToUpper(string(connMode)),
-		)
-
-		if err := a.Engine.StartNode(ctx, node, connMode, []*model.ProxyNode{node}); err != nil {
-			return fmt.Errorf("failed to start VPN: %w", err)
-		}
-
-		return a.startSessionUI(node, connMode)
+	// 2. A specific node the user already picked (e.g. via `vify list`) —
+	// connect straight to it instead of re-running discovery/benchmarking.
+	if opts.PreselectedNode != nil {
+		return a.connectToNode(ctx, opts.PreselectedNode, connMode)
 	}
 
 	var candidateNodes []*model.ProxyNode
@@ -352,6 +323,52 @@ func verifyRealConnectivity(ctx context.Context, first *model.ProxyNode, more fu
 	return nil, 0, fmt.Errorf("tried %d candidates, none passed real verification (last error: %v)", attempts, lastErr)
 }
 
+// connectToNode dials, verifies, and activates a session for a single,
+// already-known node — shared by the manual-URI path and by connecting
+// directly to a server the user picked in `vify list`.
+func (a *App) connectToNode(ctx context.Context, node *model.ProxyNode, connMode model.ConnectionMode) error {
+	fmt.Printf(" %s Testing connection to %s %s (%s:%d)...\n",
+		tui.BadgeStyle.Render("TEST"),
+		node.CountryFlag,
+		node.Name,
+		node.Server,
+		node.Port,
+	)
+
+	testCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	lat, err := ping.DialTest(testCtx, node, a.Config.TestURL)
+	cancel()
+
+	if err == nil && lat > 0 {
+		node.Latency = lat
+		node.IsHealthy = true
+		fmt.Printf(" %s Node reachable (latency: %s)\n", tui.SuccessBadge.Render("ONLINE"), tui.FormatLatency(lat.Milliseconds()))
+	} else {
+		fmt.Printf(" %s Node test warning: %v (attempting connection anyway)\n", tui.WarningBadge.Render("WARN"), err)
+	}
+
+	// The check above only confirms a raw TCP/TLS dial succeeds — it does
+	// NOT confirm the proxy protocol itself works. Actually exercise it
+	// with a real request before committing to a full session.
+	fmt.Printf(" %s Verifying real proxy handshake...\n", tui.BadgeStyle.Render("VERIFY"))
+	if realLat, verr := core.VerifyNodeReal(ctx, node, a.Config.TestURL, core.VerifyPortBase, core.VerifyPortBase+1); verr != nil {
+		fmt.Printf(" %s Real proxy check failed: %v (attempting connection anyway — this node may not work)\n", tui.WarningBadge.Render("WARN"), verr)
+	} else {
+		fmt.Printf(" %s Verified working (real latency: %s)\n", tui.SuccessBadge.Render("VERIFIED"), tui.FormatLatency(realLat.Milliseconds()))
+	}
+
+	fmt.Printf("\n %s Activating %s mode...\n",
+		tui.BadgeStyle.Render("CONNECT"),
+		strings.ToUpper(string(connMode)),
+	)
+
+	if err := a.Engine.StartNode(ctx, node, connMode, []*model.ProxyNode{node}); err != nil {
+		return fmt.Errorf("failed to start VPN: %w", err)
+	}
+
+	return a.startSessionUI(node, connMode)
+}
+
 func (a *App) startSessionUI(targetNode *model.ProxyNode, connMode model.ConnectionMode) error {
 	// Set up OS signal interceptor
 	sigChan := make(chan os.Signal, 1)
@@ -387,7 +404,11 @@ func (a *App) startSessionUI(targetNode *model.ProxyNode, connMode model.Connect
 }
 
 // RunList displays the interactive server selection TUI
-func (a *App) RunList(ctx context.Context, country, protocol string) error {
+func (a *App) RunList(ctx context.Context, country, protocol string, systemProxy bool) error {
+	if err := validateProtocol(protocol); err != nil {
+		return err
+	}
+
 	fmt.Println(tui.TitleStyle.Render("⚡ Fetching available servers for selection..."))
 
 	nodes, err := a.Fetcher.FetchAll(ctx, a.Config.Subscriptions)
@@ -409,19 +430,27 @@ func (a *App) RunList(ctx context.Context, country, protocol string) error {
 	}
 
 	finalModel := m.(tui.ListModel)
-	if finalModel.Selected != nil {
-		return a.RunConnect(ctx, ConnectOptions{
-			FastPass:     false,
-			BatchSize:    1,
-			UseCacheOnly: true,
-		})
+	if finalModel.Selected == nil {
+		return nil
 	}
 
-	return nil
+	mode := "tun"
+	if systemProxy {
+		mode = "system_proxy"
+	}
+
+	return a.RunConnect(ctx, ConnectOptions{
+		Mode:            mode,
+		PreselectedNode: finalModel.Selected,
+	})
 }
 
 // RunTest benchmarks servers and prints the leaderboard
 func (a *App) RunTest(ctx context.Context, batchSize int, country, protocol string) error {
+	if err := validateProtocol(protocol); err != nil {
+		return err
+	}
+
 	fmt.Println(tui.TitleStyle.Render("⚡ Vify Benchmark & Latency Tester"))
 	fmt.Printf(" %s Fetching candidate servers...\n", tui.BadgeStyle.Render("FETCH"))
 
@@ -549,6 +578,26 @@ func (a *App) RunDisconnect() error {
 	return nil
 }
 
+// validProtocolFlags lists every value the --protocol flag accepts, including
+// the "ss" shorthand alias for shadowsocks handled in filterNodes.
+var validProtocolFlags = []string{"vless", "vmess", "trojan", "shadowsocks", "ss"}
+
+// validateProtocol rejects an unrecognized --protocol value up front with a
+// helpful message, instead of letting it silently filter out every server
+// and surface as a generic "no servers matched" error further down.
+func validateProtocol(protocol string) error {
+	protocol = strings.ToLower(strings.TrimSpace(protocol))
+	if protocol == "" {
+		return nil
+	}
+	for _, p := range validProtocolFlags {
+		if protocol == p {
+			return nil
+		}
+	}
+	return fmt.Errorf("unknown protocol %q — valid options are: %s", protocol, strings.Join(validProtocolFlags, ", "))
+}
+
 func filterNodes(nodes []*model.ProxyNode, country, protocol string) []*model.ProxyNode {
 	if country == "" && protocol == "" {
 		return nodes
@@ -556,6 +605,9 @@ func filterNodes(nodes []*model.ProxyNode, country, protocol string) []*model.Pr
 
 	country = strings.ToUpper(strings.TrimSpace(country))
 	protocol = strings.ToLower(strings.TrimSpace(protocol))
+	if protocol == "ss" {
+		protocol = string(model.ProtocolShadowsocks)
+	}
 
 	var filtered []*model.ProxyNode
 	for _, n := range nodes {

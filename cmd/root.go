@@ -15,17 +15,7 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "vify",
 		Short: "⚡ Vify CLI — Blazing-fast, lightweight, cross-platform terminal VPN client",
-		Long: tui.TitleStyle.Render(`
-    __      ___ ____        _____ _      _____ 
-    \ \    / (_)  _ \      / ____| |    |_   _|
-     \ \  / / _| |_) | ___| |    | |      | |  
-      \ \/ / | |  _ < / _ \ |    | |      | |  
-       \  /  | | |_) |  __/ |____| |____ _| |_ 
-        \/   |_|____/ \___|\_____|______|_____|
-        
-  High-Speed, Anti-Censorship Terminal VPN for Iran
-  Direct Domestic Traffic Bypass (.ir) | Fast-Pass Latency Engine
-`),
+		Long:  tui.TitleStyle.Render("⚡ VIFY CLI"),
 	}
 )
 
