@@ -52,7 +52,7 @@ func (w *Watchdog) Start(ctx context.Context) {
 			return
 		case <-ticker.C:
 			testCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
-			latency, code, err := ping.HTTP204ViaLocalProxy(testCtx, w.ProxyURL, w.TestURL)
+			latency, code, err := ping.HTTP204ViaLocalProxy(testCtx, w.ProxyURL, w.TestURL, 3*time.Second)
 			cancel()
 
 			isHealthy := (err == nil && (code == 204 || code == 200))

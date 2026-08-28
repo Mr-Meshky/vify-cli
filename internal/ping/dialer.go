@@ -56,8 +56,12 @@ func DialTest(ctx context.Context, node *model.ProxyNode, testURL string) (time.
 	return latency, nil
 }
 
-// HTTP204ViaLocalProxy performs an actual HTTP GET request through a running local SOCKS5 or HTTP proxy
-func HTTP204ViaLocalProxy(ctx context.Context, proxyURLStr, targetURL string) (time.Duration, int, error) {
+// HTTP204ViaLocalProxy performs an actual HTTP GET request through a running
+// local SOCKS5 or HTTP proxy. Each call typically costs the caller two full
+// round-trips through the remote node (a DNS lookup, then the HTTP fetch),
+// so timeout should be sized generously on high-latency links rather than
+// assuming a single-hop request budget.
+func HTTP204ViaLocalProxy(ctx context.Context, proxyURLStr, targetURL string, timeout time.Duration) (time.Duration, int, error) {
 	proxyURL, err := url.Parse(proxyURLStr)
 	if err != nil {
 		return 0, 0, err
@@ -73,7 +77,7 @@ func HTTP204ViaLocalProxy(ctx context.Context, proxyURLStr, targetURL string) (t
 
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   3 * time.Second,
+		Timeout:   timeout,
 	}
 
 	start := time.Now()

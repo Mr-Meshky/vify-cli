@@ -1,6 +1,6 @@
 BINARY_NAME=vify
 BUILD_DIR=bin
-VERSION?=1.0.0
+VERSION?=1.0.1
 LDFLAGS=-ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=$(VERSION)'"
 
 .PHONY: all build test clean install cross-build

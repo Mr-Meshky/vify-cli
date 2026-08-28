@@ -51,7 +51,11 @@ func VerifyNodeReal(ctx context.Context, node *model.ProxyNode, testURL string, 
 		return 0, err
 	}
 
-	procCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	// 12s budget: 400ms for sing-box to bind its listeners, then room for the
+	// HTTP204ViaLocalProxy call below, which itself needs two full round-trips
+	// through the remote node (a proxied DNS lookup, then the HTTP fetch) —
+	// tight on higher-latency links if squeezed into a single-hop timeout.
+	procCtx, cancel := context.WithTimeout(ctx, 12*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(procCtx, singBoxPath, "run", "-c", cfgFilePath)
@@ -73,7 +77,7 @@ func VerifyNodeReal(ctx context.Context, node *model.ProxyNode, testURL string, 
 	}
 
 	proxyURL := fmt.Sprintf("http://127.0.0.1:%d", httpPort)
-	lat, code, err := ping.HTTP204ViaLocalProxy(procCtx, proxyURL, testURL)
+	lat, code, err := ping.HTTP204ViaLocalProxy(procCtx, proxyURL, testURL, 8*time.Second)
 	if err != nil {
 		return 0, fmt.Errorf("real proxy request failed: %w", err)
 	}
