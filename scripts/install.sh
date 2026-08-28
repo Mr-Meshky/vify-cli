@@ -17,19 +17,26 @@ case "$ARCH" in
     *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-LATEST_RELEASE="v1.0.0"
-DOWNLOAD_URL="https://github.com/Mr-Meshky/vify-cli/releases/download/${LATEST_RELEASE}/vify_${LATEST_RELEASE}_${OS}_${ARCH}.tar.gz"
+LATEST_TAG="v1.0.0"
+VERSION="${LATEST_TAG#v}"
+DOWNLOAD_URL="https://github.com/Mr-Meshky/vify-cli/releases/download/${LATEST_TAG}/vify_${VERSION}_${OS}_${ARCH}.tar.gz"
 
 TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 cd "$TMP_DIR"
 
+DOWNLOAD_OK=false
 if command -v curl >/dev/null 2>&1; then
-    curl -sL "$DOWNLOAD_URL" -o vify.tar.gz || true
+    if curl -fsSL "$DOWNLOAD_URL" -o vify.tar.gz; then
+        DOWNLOAD_OK=true
+    fi
 elif command -v wget >/dev/null 2>&1; then
-    wget -q "$DOWNLOAD_URL" -O vify.tar.gz || true
+    if wget -q "$DOWNLOAD_URL" -O vify.tar.gz; then
+        DOWNLOAD_OK=true
+    fi
 fi
 
-if [ -f vify.tar.gz ]; then
+if [ "$DOWNLOAD_OK" = true ] && [ -s vify.tar.gz ]; then
     tar -xzf vify.tar.gz
     sudo mv vify /usr/local/bin/vify || mv vify "$HOME/.local/bin/vify"
 else
