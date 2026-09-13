@@ -311,28 +311,11 @@ jobs:
             cp ui/assets/app_icon.png "$PKG_DIR/usr/share/pixmaps/vify.png"
           fi
 
-          cat <<EOF > "$PKG_DIR/usr/share/applications/vify.desktop"
-[Desktop Entry]
-Name=Vify
-Comment=High-performance V2Ray and Sing-box GUI Client
-Exec=/opt/vify/ui
-Icon=vify
-Terminal=false
-Type=Application
-Categories=Network;VPN;Utility;
-Keywords=vpn;proxy;v2ray;singbox;
-EOF
+          # Generate .desktop launcher file
+          printf "[Desktop Entry]\nName=Vify\nComment=High-performance V2Ray and Sing-box GUI Client\nExec=/opt/vify/ui\nIcon=vify\nTerminal=false\nType=Application\nCategories=Network;VPN;Utility;\nKeywords=vpn;proxy;v2ray;singbox;\n" > "$PKG_DIR/usr/share/applications/vify.desktop"
 
-          cat <<EOF > "$PKG_DIR/DEBIAN/control"
-Package: vify
-Version: ${VERSION}
-Section: net
-Priority: optional
-Architecture: amd64
-Maintainer: Mr-Meshky <info@vify.org>
-Description: High-performance V2Ray and Sing-box GUI Client
- Vify is a modern proxy and VPN desktop client with TUN routing and node management.
-EOF
+          # Generate Debian control file
+          printf "Package: vify\nVersion: %s\nSection: net\nPriority: optional\nArchitecture: amd64\nMaintainer: Mr-Meshky <info@vify.org>\nDescription: High-performance V2Ray and Sing-box GUI Client\n Vify is a modern proxy and VPN desktop client with TUN routing and node management.\n" "$VERSION" > "$PKG_DIR/DEBIAN/control"
 
           dpkg-deb --build --root-owner-group "$PKG_DIR" "dist/vify-linux-amd64.deb"
           rm -rf "$PKG_DIR"
