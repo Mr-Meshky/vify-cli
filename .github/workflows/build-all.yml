@@ -130,9 +130,8 @@ jobs:
           mkdir -p dist
           RELEASE_DIR="$GITHUB_WORKSPACE/ui/build/macos/Build/Products/Release"
           cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/"
-          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" \
-            -C "$RELEASE_DIR" ui.app \
-            -C "$RELEASE_DIR" vify
+          cd "$RELEASE_DIR"
+          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" ui.app vify
           cp "$GITHUB_WORKSPACE/bin/vify" "$GITHUB_WORKSPACE/dist/vify-cli-darwin-universal"
 
       - name: Upload macOS Artifact
