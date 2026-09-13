@@ -125,20 +125,43 @@ jobs:
           flutter pub get
           flutter build macos --release
 
-      - name: Package macOS DMG / ZIP
+      - name: Package macOS DMG & ZIP
         run: |
           mkdir -p dist
           RELEASE_DIR="$GITHUB_WORKSPACE/ui/build/macos/Build/Products/Release"
           cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/"
+          
+          # Create ZIP archive
           cd "$RELEASE_DIR"
           zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" ui.app vify
           cp "$GITHUB_WORKSPACE/bin/vify" "$GITHUB_WORKSPACE/dist/vify-cli-darwin-universal"
+          
+          # Install create-dmg
+          brew install create-dmg || true
+
+          # Create DMG
+          create-dmg \
+            --volname "Vify Installer" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --app-drop-link 425 190 \
+            --hide-extension "ui.app" \
+            "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg" \
+            "$RELEASE_DIR/ui.app" || true
+
+          if [ ! -f "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg" ]; then
+            echo "Fallback to hdiutil..."
+            hdiutil create -volname "Vify" -srcfolder "$RELEASE_DIR/ui.app" -ov -format UDZO "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg"
+          fi
+          ls -lh "$GITHUB_WORKSPACE/dist"
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: vify-macos
           path: |
+            dist/vify-macos-universal.dmg
             dist/vify-macos-universal.zip
             dist/vify-cli-darwin-universal
 
@@ -186,18 +209,31 @@ jobs:
           New-Item -ItemType Directory -Force -Path "build\native_assets\windows" | Out-Null
           flutter build windows --release
 
-      - name: Package Windows ZIP
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Package Windows Installer (.exe) & ZIP
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
           Copy-Item bin/vify.exe -Destination ui/build/windows/x64/runner/Release/
+          # Create ZIP archive
           Compress-Archive -Path ui/build/windows/x64/runner/Release/* -DestinationPath dist/vify-windows-x64.zip
+          # Compile Inno Setup Installer (.exe)
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          if ([string]::IsNullOrEmpty($version) -or $version -eq "main") { $version = "1.2.0" }
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=$version packaging/windows/installer.iss
+          Get-ChildItem dist
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
           name: vify-windows
-          path: dist/vify-windows-x64.zip
+          path: |
+            dist/vify-windows-x64.zip
+            dist/vify-windows-x64-setup.exe
 
   build-linux:
     name: Build Linux App
@@ -247,12 +283,59 @@ jobs:
           mkdir -p build/native_assets/linux
           flutter build linux --release
 
-      - name: Package Linux Bundle
+      - name: Package Linux DEB & Bundle
         run: |
           mkdir -p dist
           cp bin/vify ui/build/linux/x64/release/bundle/
           tar -czvf dist/vify-linux-x64.tar.gz -C ui/build/linux/x64/release/bundle/ .
           cp bin/vify dist/vify-cli-linux-amd64
+
+          # Build Debian/Ubuntu package (.deb)
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then VERSION="1.2.0"; fi
+
+          PKG_DIR="dist/deb-pkg"
+          mkdir -p "$PKG_DIR/DEBIAN"
+          mkdir -p "$PKG_DIR/opt/vify"
+          mkdir -p "$PKG_DIR/usr/bin"
+          mkdir -p "$PKG_DIR/usr/share/applications"
+          mkdir -p "$PKG_DIR/usr/share/pixmaps"
+
+          cp -r ui/build/linux/x64/release/bundle/* "$PKG_DIR/opt/vify/"
+          ln -sf /opt/vify/ui "$PKG_DIR/usr/bin/vify-ui"
+          ln -sf /opt/vify/vify "$PKG_DIR/usr/bin/vify"
+
+          if [ -f ui/assets/app_icon.png ]; then
+            cp ui/assets/app_icon.png "$PKG_DIR/usr/share/pixmaps/vify.png"
+          fi
+
+          cat <<EOF > "$PKG_DIR/usr/share/applications/vify.desktop"
+[Desktop Entry]
+Name=Vify
+Comment=High-performance V2Ray and Sing-box GUI Client
+Exec=/opt/vify/ui
+Icon=vify
+Terminal=false
+Type=Application
+Categories=Network;VPN;Utility;
+Keywords=vpn;proxy;v2ray;singbox;
+EOF
+
+          cat <<EOF > "$PKG_DIR/DEBIAN/control"
+Package: vify
+Version: ${VERSION}
+Section: net
+Priority: optional
+Architecture: amd64
+Maintainer: Mr-Meshky <info@vify.org>
+Description: High-performance V2Ray and Sing-box GUI Client
+ Vify is a modern proxy and VPN desktop client with TUN routing and node management.
+EOF
+
+          dpkg-deb --build --root-owner-group "$PKG_DIR" "dist/vify-linux-amd64.deb"
+          rm -rf "$PKG_DIR"
+          ls -lh dist/
 
       - name: Upload Linux Artifact
         uses: actions/upload-artifact@v4
@@ -260,6 +343,7 @@ jobs:
           name: vify-linux
           path: |
             dist/vify-linux-x64.tar.gz
+            dist/vify-linux-amd64.deb
             dist/vify-cli-linux-amd64
 
   release:
@@ -278,10 +362,15 @@ jobs:
           mkdir -p release-assets
           # Android APKs
           cp dist/vify-android/*.apk release-assets/ 2>/dev/null || true
-          # Desktop Archives & Binaries
+          # macOS Installers & Archives
+          cp dist/vify-macos/*.dmg release-assets/ 2>/dev/null || true
           cp dist/vify-macos/*.zip release-assets/ 2>/dev/null || true
           cp dist/vify-macos/vify-cli-darwin-universal release-assets/ 2>/dev/null || true
+          # Windows Installer & Archives
+          cp dist/vify-windows/*.exe release-assets/ 2>/dev/null || true
           cp dist/vify-windows/*.zip release-assets/ 2>/dev/null || true
+          # Linux Installer & Archives
+          cp dist/vify-linux/*.deb release-assets/ 2>/dev/null || true
           cp dist/vify-linux/*.tar.gz release-assets/ 2>/dev/null || true
           cp dist/vify-linux/vify-cli-linux-amd64 release-assets/ 2>/dev/null || true
           ls -lh release-assets/
