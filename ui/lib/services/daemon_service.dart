@@ -9,24 +9,40 @@ class DaemonService {
   static const String baseUrl = 'http://127.0.0.1:28190';
 
   static String findVifyBinary() {
+    try {
+      final appDir = File(Platform.resolvedExecutable).parent.path;
+      final exeCandidates = [
+        '$appDir/vify',
+        '$appDir/vify.exe',
+        '$appDir/bin/vify.exe',
+        '$appDir/vify-cli.exe',
+        '$appDir/../Resources/vify',
+      ];
+      for (final p in exeCandidates) {
+        if (File(p).existsSync()) return p;
+      }
+    } catch (_) {}
+
     final home = Platform.environment['HOME'] ?? '';
     final candidates = [
       '$home/.local/bin/vify',
       '/usr/local/bin/vify',
       '/opt/homebrew/bin/vify',
-      '/Users/mrmeshky/.local/bin/vify',
+      '/opt/vify/vify',
+      '/usr/bin/vify',
     ];
     for (final p in candidates) {
       if (File(p).existsSync()) return p;
     }
     try {
-      final res = Process.runSync('which', ['vify']);
-      final out = res.stdout.toString().trim();
+      final whichCmd = Platform.isWindows ? 'where' : 'which';
+      final res = Process.runSync(whichCmd, ['vify']);
+      final out = res.stdout.toString().trim().split('\n').first.trim();
       if (res.exitCode == 0 && out.isNotEmpty && File(out).existsSync()) {
         return out;
       }
     } catch (_) {}
-    return 'vify';
+    return Platform.isWindows ? 'vify.exe' : 'vify';
   }
 
   Future<bool> isDaemonRunning() async {

@@ -130,11 +130,20 @@ jobs:
         run: |
           mkdir -p dist
           RELEASE_DIR="$GITHUB_WORKSPACE/ui/build/macos/Build/Products/Release"
+          
+          # Ensure AppIcon.icns with full resolution is present in the app bundle
+          if [ -f "$GITHUB_WORKSPACE/ui/macos/Runner/AppIcon.icns" ]; then
+            cp "$GITHUB_WORKSPACE/ui/macos/Runner/AppIcon.icns" "$RELEASE_DIR/Vify.app/Contents/Resources/AppIcon.icns"
+          fi
+
+          # Embed CLI binary inside Vify.app bundle as well as release dir
+          cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/Vify.app/Contents/MacOS/vify"
+          chmod +x "$RELEASE_DIR/Vify.app/Contents/MacOS/vify"
           cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/"
           
           # Create ZIP archive
           cd "$RELEASE_DIR"
-          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" ui.app vify
+          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" Vify.app vify
           cp "$GITHUB_WORKSPACE/bin/vify" "$GITHUB_WORKSPACE/dist/vify-cli-darwin-universal"
           
           # Install create-dmg
@@ -143,17 +152,18 @@ jobs:
           # Create DMG
           create-dmg \
             --volname "Vify Installer" \
+            --volicon "$RELEASE_DIR/Vify.app/Contents/Resources/AppIcon.icns" \
             --window-pos 200 120 \
             --window-size 600 400 \
             --icon-size 100 \
             --app-drop-link 425 190 \
-            --hide-extension "ui.app" \
+            --hide-extension "Vify.app" \
             "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg" \
-            "$RELEASE_DIR/ui.app" || true
+            "$RELEASE_DIR/Vify.app" || true
 
           if [ ! -f "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg" ]; then
             echo "Fallback to hdiutil..."
-            hdiutil create -volname "Vify" -srcfolder "$RELEASE_DIR/ui.app" -ov -format UDZO "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg"
+            hdiutil create -volname "Vify" -srcfolder "$RELEASE_DIR/Vify.app" -ov -format UDZO "$GITHUB_WORKSPACE/dist/vify-macos-universal.dmg"
           fi
           ls -lh "$GITHUB_WORKSPACE/dist"
 
@@ -219,7 +229,9 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
-          Copy-Item bin/vify.exe -Destination ui/build/windows/x64/runner/Release/
+          New-Item -ItemType Directory -Force -Path ui/build/windows/x64/runner/Release/bin | Out-Null
+          Copy-Item bin/vify.exe -Destination ui/build/windows/x64/runner/Release/bin/
+          Copy-Item bin/vify.exe -Destination ui/build/windows/x64/runner/Release/vify-cli.exe
           # Create ZIP archive
           Compress-Archive -Path ui/build/windows/x64/runner/Release/* -DestinationPath dist/vify-windows-x64.zip
           # Compile Inno Setup Installer (.exe)
@@ -304,7 +316,7 @@ jobs:
           mkdir -p "$PKG_DIR/usr/share/pixmaps"
 
           cp -r ui/build/linux/x64/release/bundle/* "$PKG_DIR/opt/vify/"
-          ln -sf /opt/vify/ui "$PKG_DIR/usr/bin/vify-ui"
+          ln -sf /opt/vify/vify-ui "$PKG_DIR/usr/bin/vify-ui"
           ln -sf /opt/vify/vify "$PKG_DIR/usr/bin/vify"
 
           if [ -f ui/assets/app_icon.png ]; then
@@ -312,7 +324,7 @@ jobs:
           fi
 
           # Generate .desktop launcher file
-          printf "[Desktop Entry]\nName=Vify\nComment=High-performance V2Ray and Sing-box GUI Client\nExec=/opt/vify/ui\nIcon=vify\nTerminal=false\nType=Application\nCategories=Network;VPN;Utility;\nKeywords=vpn;proxy;v2ray;singbox;\n" > "$PKG_DIR/usr/share/applications/vify.desktop"
+          printf "[Desktop Entry]\nName=Vify\nComment=High-performance V2Ray and Sing-box GUI Client\nExec=/opt/vify/vify-ui\nIcon=vify\nTerminal=false\nType=Application\nCategories=Network;VPN;Utility;\nKeywords=vpn;proxy;v2ray;singbox;\n" > "$PKG_DIR/usr/share/applications/vify.desktop"
 
           # Generate Debian control file
           printf "Package: vify\nVersion: %s\nSection: net\nPriority: optional\nArchitecture: amd64\nMaintainer: Mr-Meshky <info@vify.org>\nDescription: High-performance V2Ray and Sing-box GUI Client\n Vify is a modern proxy and VPN desktop client with TUN routing and node management.\n" "$VERSION" > "$PKG_DIR/DEBIAN/control"

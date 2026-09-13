@@ -31,9 +31,9 @@
 
 | سیستم‌عامل / پلتفرم | نوع برنامه | فرمت فایل | راهنمای اجرا |
 | :--- | :--- | :--- | :--- |
-| 🍏 **macOS** (Universal) | 🖥️ Desktop GUI | `.zip` (شامل `ui.app` + CLI) | Unzip و انتقال به `/Applications` |
-| 🐧 **Linux** (x86_64) | 🖥️ Desktop GUI | `.tar.gz` (بسته کامل با دیمن) | `tar -xzvf vify-linux-x64.tar.gz && ./ui` |
-| 🪟 **Windows** (x64) | 🖥️ Desktop GUI | `.zip` (شامل `ui.exe` + دیمن) | استخراج فایل فشرده و اجرای `ui.exe` |
+| 🍏 **macOS** (Universal) | 🖥️ Desktop GUI | `.dmg` / `.zip` (شامل `Vify.app` + CLI) | نصب فایل DMG یا انتقال `Vify.app` به `/Applications` |
+| 🪟 **Windows** (x64) | 🖥️ Desktop GUI | Setup `.exe` / `.zip` | نصب خودکار با اینستالر یا اجرای مستقیم `Vify.exe` |
+| 🐧 **Linux** (x86_64) | 🖥️ Desktop GUI | `.deb` / `.tar.gz` | نصب با `sudo dpkg -i` یا اجرای `vify-ui` |
 | 🤖 **Android** | 📱 Mobile App | `.apk` (Universal / ARM64) | نصب فایل APK روی گوشی اندرویدی |
 | 💻 **Linux CLI** (x86_64) | ⚡ Terminal CLI | باینری مستقل | `chmod +x vify-cli-linux-amd64 && ./vify-cli-linux-amd64` |
 | 💻 **macOS CLI** | ⚡ Terminal CLI | باینری مستقل Universal | `chmod +x vify-cli-darwin-universal && ./vify-cli-darwin-universal` |

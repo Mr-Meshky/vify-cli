@@ -4,7 +4,7 @@
 #endif
 #define MyAppPublisher "Mr-Meshky"
 #define MyAppURL "https://github.com/Mr-Meshky/vify-cli"
-#define MyAppExeName "ui.exe"
+#define MyAppExeName "Vify.exe"
 
 [Setup]
 AppId={{D37E8674-8C13-4B98-95D9-05E8FF0DC2F6}
