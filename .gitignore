@@ -1,6 +1,7 @@
 # Build artifacts
 /bin/
 /dist/
+vify-cli
 
 # Go
 *.test

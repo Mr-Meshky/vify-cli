@@ -52,6 +52,7 @@ type ConnectOptions struct {
 	UseCacheOnly    bool
 	ManualURI       string
 	PreselectedNode *model.ProxyNode
+	Headless        bool
 }
 
 // RunConnect handles automatic or filtered fast-pass connection or manual config link
@@ -232,6 +233,10 @@ func (a *App) RunConnect(ctx context.Context, opts ConnectOptions) error {
 
 	if err := a.Engine.StartNode(ctx, targetNode, connMode, healthyNodes); err != nil {
 		return fmt.Errorf("failed to start proxy session: %w", err)
+	}
+
+	if opts.Headless {
+		return nil
 	}
 
 	return a.startSessionUI(targetNode, connMode)

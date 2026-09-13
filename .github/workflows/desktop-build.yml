@@ -1,0 +1,164 @@
+name: Build & Release Vify Desktop
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS App
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Go CLI & Daemon
+        run: |
+          go build -ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=${{ github.ref_name }}'" -o bin/vify .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Build Flutter macOS Release
+        run: |
+          cd ui
+          flutter pub get
+          flutter build macos --release
+
+      - name: Package macOS DMG / ZIP
+        run: |
+          mkdir -p dist
+          cp bin/vify ui/build/macos/Build/Products/Release/
+          cd ui/build/macos/Build/Products/Release/
+          zip -r ../../../../../dist/vify-macos-universal.zip .
+          cd ../../../../../
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-macos
+          path: dist/vify-macos-universal.zip
+
+  build-windows:
+    name: Build Windows App
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Go Windows Binary
+        run: |
+          go build -ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=${{ github.ref_name }}'" -o bin/vify.exe .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Build Flutter Windows Release
+        run: |
+          cd ui
+          flutter pub get
+          flutter build windows --release
+
+      - name: Package Windows ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item bin/vify.exe -Destination ui/build/windows/x64/runner/Release/
+          Compress-Archive -Path ui/build/windows/x64/runner/Release/* -DestinationPath dist/vify-windows-x64.zip
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-windows
+          path: dist/vify-windows-x64.zip
+
+  build-linux:
+    name: Build Linux App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libayatana-appindicator3-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Go Linux Binary
+        run: |
+          go build -ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=${{ github.ref_name }}'" -o bin/vify .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Build Flutter Linux Release
+        run: |
+          cd ui
+          flutter pub get
+          flutter build linux --release
+
+      - name: Package Linux Bundle
+        run: |
+          mkdir -p dist
+          cp bin/vify ui/build/linux/x64/release/bundle/
+          tar -czvf dist/vify-linux-x64.tar.gz -C ui/build/linux/x64/release/bundle/ .
+          cp bin/vify dist/vify-cli-linux-amd64
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-linux
+          path: |
+            dist/vify-linux-x64.tar.gz
+            dist/vify-cli-linux-amd64
+
+  release:
+    name: Create GitHub Release
+    needs: [build-macos, build-windows, build-linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/vify-macos/vify-macos-universal.zip
+            dist/vify-windows/vify-windows-x64.zip
+            dist/vify-linux/vify-linux-x64.tar.gz
+          generate_release_notes: true
