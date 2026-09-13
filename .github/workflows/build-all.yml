@@ -128,10 +128,12 @@ jobs:
       - name: Package macOS DMG / ZIP
         run: |
           mkdir -p dist
-          cp bin/vify ui/build/macos/Build/Products/Release/
-          cd ui/build/macos/Build/Products/Release/
-          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" ui.app vify
-          cp bin/vify "$GITHUB_WORKSPACE/dist/vify-cli-darwin-universal"
+          RELEASE_DIR="$GITHUB_WORKSPACE/ui/build/macos/Build/Products/Release"
+          cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/"
+          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" \
+            -C "$RELEASE_DIR" ui.app \
+            -C "$RELEASE_DIR" vify
+          cp "$GITHUB_WORKSPACE/bin/vify" "$GITHUB_WORKSPACE/dist/vify-cli-darwin-universal"
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
@@ -177,9 +179,12 @@ jobs:
             ${{ runner.os }}-pub-
 
       - name: Build Flutter Windows Release
+        shell: pwsh
         run: |
           cd ui
           flutter pub get
+          # Create native_assets directory to avoid CMake INSTALL error
+          New-Item -ItemType Directory -Force -Path "build\native_assets\windows" | Out-Null
           flutter build windows --release
 
       - name: Package Windows ZIP
@@ -239,6 +244,8 @@ jobs:
         run: |
           cd ui
           flutter pub get
+          # Create native_assets directory to avoid CMake INSTALL error
+          mkdir -p build/native_assets/linux
           flutter build linux --release
 
       - name: Package Linux Bundle
