@@ -29,7 +29,6 @@ type DaemonStatus struct {
 
 // ConnectRequest is the JSON payload for /api/connect
 type ConnectRequest struct {
-	Target       string `json:"target"`
 	Country      string `json:"country"`
 	Protocol     string `json:"protocol"`
 	Mode         string `json:"mode"`
@@ -171,13 +170,6 @@ func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 	s.broadcastEvent("status_change", s.status)
 
 	go func() {
-		testURL := s.app.Config.TestURL
-		if req.Target == "gemini" || req.Target == "ai" {
-			testURL = "https://gemini.google.com/"
-		}
-
-		s.app.Config.TestURL = testURL
-
 		opts := app.ConnectOptions{
 			Country:      req.Country,
 			Protocol:     req.Protocol,

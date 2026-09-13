@@ -10,16 +10,16 @@ import 'theme/vify_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Desktop Window (macOS / Windows / Linux)
-  await WindowService.initialize();
-
   final vpnProvider = VpnProvider();
 
-  // Initialize System Tray / Menu Bar
-  await TrayService().initialize(
-    onToggle: () => vpnProvider.toggleConnection(),
-    quit: () => exit(0),
-  );
+  // Initialize Desktop Window and Tray only on Desktop
+  if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+    await WindowService.initialize();
+    await TrayService().initialize(
+      onToggle: () => vpnProvider.toggleConnection(),
+      quit: () => exit(0),
+    );
+  }
 
   runApp(
     MultiProvider(

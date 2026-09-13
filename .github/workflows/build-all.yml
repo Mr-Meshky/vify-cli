@@ -1,0 +1,287 @@
+name: Build & Release Vify (All Platforms)
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-android:
+    name: Build Android APKs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ui/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('ui/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install Dependencies
+        run: |
+          cd ui
+          flutter pub get
+
+      - name: Build Universal & Split APKs
+        run: |
+          cd ui
+          flutter build apk --release
+          flutter build apk --release --split-per-abi
+
+      - name: Collect Android APKs
+        run: |
+          mkdir -p dist/android
+          # Universal APK
+          if [ -f ui/build/app/outputs/flutter-apk/app-release.apk ]; then
+            cp ui/build/app/outputs/flutter-apk/app-release.apk dist/android/vify-android-universal.apk
+          fi
+          # Split APKs (arm64-v8a, armeabi-v7a, x86_64)
+          for apk in ui/build/app/outputs/flutter-apk/app-*-release.apk; do
+            filename=$(basename "$apk")
+            if [ "$filename" != "app-release.apk" ]; then
+              abi=$(echo "$filename" | sed 's/app-//' | sed 's/-release.apk//')
+              cp "$apk" "dist/android/vify-android-${abi}.apk"
+            fi
+          done
+          ls -lh dist/android/
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-android
+          path: dist/android/*.apk
+
+  build-macos:
+    name: Build macOS App
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Build Go CLI & Daemon
+        run: |
+          mkdir -p bin
+          go build -ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=${{ github.ref_name }}'" -o bin/vify .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ui/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('ui/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Build Flutter macOS Release
+        run: |
+          cd ui
+          flutter pub get
+          flutter build macos --release
+
+      - name: Package macOS DMG / ZIP
+        run: |
+          mkdir -p dist
+          cp bin/vify ui/build/macos/Build/Products/Release/
+          cd ui/build/macos/Build/Products/Release/
+          zip -r -9 "$GITHUB_WORKSPACE/dist/vify-macos-universal.zip" ui.app vify
+          cp bin/vify "$GITHUB_WORKSPACE/dist/vify-cli-darwin-universal"
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-macos
+          path: |
+            dist/vify-macos-universal.zip
+            dist/vify-cli-darwin-universal
+
+  build-windows:
+    name: Build Windows App
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Build Go Windows Binary
+        run: |
+          New-Item -ItemType Directory -Force -Path bin
+          go build -ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=${{ github.ref_name }}'" -o bin/vify.exe .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.LOCALAPPDATA }}\Pub\Cache
+            ui\.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('ui/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Build Flutter Windows Release
+        run: |
+          cd ui
+          flutter pub get
+          flutter build windows --release
+
+      - name: Package Windows ZIP
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item bin/vify.exe -Destination ui/build/windows/x64/runner/Release/
+          Compress-Archive -Path ui/build/windows/x64/runner/Release/* -DestinationPath dist/vify-windows-x64.zip
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-windows
+          path: dist/vify-windows-x64.zip
+
+  build-linux:
+    name: Build Linux App
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libayatana-appindicator3-dev
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Build Go Linux Binary
+        run: |
+          mkdir -p bin
+          go build -ldflags "-s -w -X 'github.com/Mr-Meshky/vify-cli/cmd.version=${{ github.ref_name }}'" -o bin/vify .
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ui/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('ui/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Build Flutter Linux Release
+        run: |
+          cd ui
+          flutter pub get
+          flutter build linux --release
+
+      - name: Package Linux Bundle
+        run: |
+          mkdir -p dist
+          cp bin/vify ui/build/linux/x64/release/bundle/
+          tar -czvf dist/vify-linux-x64.tar.gz -C ui/build/linux/x64/release/bundle/ .
+          cp bin/vify dist/vify-cli-linux-amd64
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vify-linux
+          path: |
+            dist/vify-linux-x64.tar.gz
+            dist/vify-cli-linux-amd64
+
+  release:
+    name: Create Multiplatform GitHub Release
+    needs: [build-android, build-macos, build-windows, build-linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Organize Release Files
+        run: |
+          mkdir -p release-assets
+          # Android APKs
+          cp dist/vify-android/*.apk release-assets/ 2>/dev/null || true
+          # Desktop Archives & Binaries
+          cp dist/vify-macos/*.zip release-assets/ 2>/dev/null || true
+          cp dist/vify-macos/vify-cli-darwin-universal release-assets/ 2>/dev/null || true
+          cp dist/vify-windows/*.zip release-assets/ 2>/dev/null || true
+          cp dist/vify-linux/*.tar.gz release-assets/ 2>/dev/null || true
+          cp dist/vify-linux/vify-cli-linux-amd64 release-assets/ 2>/dev/null || true
+          ls -lh release-assets/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true

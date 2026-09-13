@@ -1,279 +1,180 @@
-# ⚡ vify-cli
+# ⚡ Vify
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Mr-Meshky/vify-cli/main/ui/macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png" alt="Vify Logo" width="96" height="96" />
+</p>
+
+<p align="center">
+  <b>فیلترشکن فوق‌سریع، هوشمند و کراس‌پلتفرم Vify برای دور زدن فیلترینگ شدید در ایران</b><br>
+  <b>Blazing-Fast, Intelligent Anti-Censorship VPN & Proxy Client (Desktop GUI, Mobile & CLI)</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Mr-Meshky/vify-cli/releases"><img src="https://img.shields.io/github/v/release/Mr-Meshky/vify-cli?color=00F5D4&label=Release&logo=github&style=flat-square" alt="Release"></a>
+  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows%20%7C%20Android-05FFA1?style=flat-square" alt="Platforms">
+  <img src="https://img.shields.io/badge/Language-Go%20%2B%20Flutter-00BBF9?style=flat-square" alt="Stack">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-9B5DE5?style=flat-square" alt="License"></a>
+</p>
 
 <p align="center">
   <a href="#فارسی">🇮🇷 فارسی</a> •
-  <a href="#english">🇬🇧 English</a>
+  <a href="#english">🇬🇧 English</a> •
+  <a href="#-دانلود-و-نصب--downloads">📥 دانلود / Downloads</a>
 </p>
 
 ---
 
+<a id="-دانلود-و-نصب--downloads"></a>
+## 📥 دانلود و نصب / Downloads
+
+تمام نسخه‌ها از صفحه **[GitHub Releases](https://github.com/Mr-Meshky/vify-cli/releases)** قابل دریافت هستند:
+
+| سیستم‌عامل / پلتفرم | نوع برنامه | فرمت فایل | راهنمای اجرا |
+| :--- | :--- | :--- | :--- |
+| 🍏 **macOS** (Universal) | 🖥️ Desktop GUI | `.zip` (شامل `ui.app` + CLI) | Unzip و انتقال به `/Applications` |
+| 🐧 **Linux** (x86_64) | 🖥️ Desktop GUI | `.tar.gz` (بسته کامل با دیمن) | `tar -xzvf vify-linux-x64.tar.gz && ./ui` |
+| 🪟 **Windows** (x64) | 🖥️ Desktop GUI | `.zip` (شامل `ui.exe` + دیمن) | استخراج فایل فشرده و اجرای `ui.exe` |
+| 🤖 **Android** | 📱 Mobile App | `.apk` (Universal / ARM64) | نصب فایل APK روی گوشی اندرویدی |
+| 💻 **Linux CLI** (x86_64) | ⚡ Terminal CLI | باینری مستقل | `chmod +x vify-cli-linux-amd64 && ./vify-cli-linux-amd64` |
+| 💻 **macOS CLI** | ⚡ Terminal CLI | باینری مستقل Universal | `chmod +x vify-cli-darwin-universal && ./vify-cli-darwin-universal` |
+
+---
+
 <a id="فارسی"></a>
-## 🇮🇷 فارسی
+## 🇮🇷 راهنمای فارسی
 
-> **کلاینت VPN ترمینالی، فوق‌سریع، سبک و کراس‌پلتفرم — نوشته‌شده با Go**
-> کاربران ایرانی رو به پراکسی‌های رایگان، پرسرعت و ضدفیلترینگ از [اکوسیستم Vify](https://github.com/Mr-Meshky/vify) وصل می‌کنه.
+> **کلاینت ضدفیلترینگ مدرن، فوق‌سریع و کراس‌پلتفرم — با هسته پرقدرت Go و رابط کاربری شیشه‌ای Flutter**  
+> دسترسی آسان و پایدار به پراکسی‌های پرسرعت، سالم و ضدفیلتر از [اکوسیستم Vify](https://github.com/Mr-Meshky/vify) برای دور زدن فیلترینگ همراه اول، ایرانسل، رایتل، مخابرات و شاتل.
 
-روی **macOS**، **لینوکس (سرور و دسکتاپ)**، **ویندوز** و **اندروید (Termux)** به‌طور کامل کار می‌کنه.
+---
 
-### 🌟 ویژگی‌های کلیدی
+### 🖥️ ویژگی‌های اپلیکیشن گرافیکی (Desktop & Mobile)
 
-- 🚀 **سریع و سبک:** باینری خالص Go با مصرف حافظه‌ی کم و بدون وابستگی اضافه.
-- 🎯 **تست دسته‌ای واقعی سمت کلاینت:** سرورهای کاندید رو به‌صورت هم‌زمان (۲۰ تا ۵۰ گوروتین) با endpointهای واقعی HTTP/204 (`cp.cloudflare.com` / `google.com`) و هندشیک TLS بنچمارک می‌کنه تا از عبور واقعی از DPI ایران (همراه اول، ایرانسل، رایتل، مخابرات، شاتل) مطمئن بشه.
-- ✅ **اعتبارسنجی واقعی پروتکل:** برخلاف یه تست TCP/TLS ساده که هر پورت بازی رو قبول می‌کنه، قبل از اتصال نهایی یه پروسه‌ی sing-box واقعی و کوتاه‌مدت راه می‌ندازه و یه درخواست HTTP واقعی از تونل رد می‌کنه — نودهایی که واقعاً کار نمی‌کنن (حتی اگه پورتشون باز باشه) رد می‌شن و اتصال خودکار سراغ کاندید بعدی می‌ره.
-- ⚡ **اتصال آنی Fast-Pass:** به محض تأیید اولین نود سالم با تأخیر زیر ۸۰۰ میلی‌ثانیه، فوراً وصل می‌شه و کشف بقیه‌ی سرورها در پس‌زمینه ادامه پیدا می‌کنه.
-- 🇮🇷 **بایپس هوشمند ترافیک داخلی ایران:** قوانین مسیریابی مستقیم برای GeoIP ایران (`geoip:ir`)، GeoSite ایران (`geosite:ir`) و دامنه‌های داخلی (`.ir`، بانک‌ها، شاپرک، دیجی‌کالا، دیوار، اسنپ) برای سرعت کامل و مصرف نصف‌قیمت پهنای‌باند.
-- 🛡️ **دو حالت اتصال (TUN و System Proxy):**
-  - **حالت TUN (VPN کامل):** یه اینترفیس شبکه‌ی مجازی می‌سازه و کل ترافیک سیستم رو مسیریابی می‌کنه (نیاز به دسترسی root/sudo).
-  - **حالت System Proxy:** پراکسی HTTP و SOCKS5 سیستمی رو بدون نیاز به دسترسی root تنظیم می‌کنه.
-- 🎨 **رابط ترمینالی مدرن:** ساخته‌شده با [Charmbracelet Bubble Tea و Lipgloss](https://charm.sh) با اسپینر زنده، پرچم کشور سرورها و نمایش لحظه‌ای سرعت آپلود/دانلود.
-- 🔄 **واچ‌داگ Auto-Failover:** به‌صورت پس‌زمینه throttle یا قطعی ناشی از DPI رو تشخیص می‌ده و فوراً به بهترین سرور سالم بعدی سوییچ می‌کنه — چه به‌خاطر throttle تدریجی (پایش دوره‌ای) و چه کرش ناگهانی پروسه (تشخیص آنی).
-- 🔍 **اسکنر Clean-IP کلادفلر:** به‌صورت خودکار از رنج‌های واقعی IP کلادفلر نمونه‌برداری تصادفی می‌کنه (نه فقط یه لیست ثابت) تا آی‌پی‌های تمیز و کم‌تأخیر مخصوص ISP خودت رو کشف کنه.
-- 💾 **کش آفلاین:** کانفیگ‌های سالم رو در `~/.vify/cache.json` ذخیره می‌کنه تا موقع قطعی ناگهانی هم بشه سریع وصل شد.
+- ⚡ **اتصال تک‌کلیکه (One-Tap Connect):** انتخاب آنی و بدون وقفه سریع‌ترین سرور سالم در کمتر از ۱ ثانیه.
+- 🎨 **طراحی نئونی و مدرن (Modern Glassmorphism):** رابط کاربری تاریک، انیمیشن‌های پویا و حلقه وضعیت ضربان‌دار.
+- 📊 **مانیتورینگ زنده پهنای‌باند:** نمایش لحظه‌ای سرعت دانلود، آپلود و پینگ (Latency) به میلی‌ثانیه.
+- 🛡️ **سوییچ سریع حالت تونل:** جابه‌جایی آنی با یک کلیک بین **TUN Mode (وی‌پی‌ان کامل سیستمی)** و **System Proxy (پراکسی سیستمی بدون نیاز به پسورد ادمین)**.
+- 🌐 **دراور هوشمند انتخاب سرور:** مشاهده لیست سرورها همراه با پرچم کشور، پروتکل و پینگ زنده.
+- 📥 **پشتیبانی از System Tray و Menu Bar:** کارکرد بی‌صدا در پس‌زمینه سیستم؛ بستن پنجره اتصال را قطع نمی‌کند و دسترسی سریع در منوبار مک یا تسک‌بار ویندوز و لینوکس باقی می‌ماند.
 
-### 📦 نصب
+---
 
-**اسکریپت یک‌خطی (macOS / لینوکس / Termux):**
+### ⚡ ویژگی‌های هسته و خط فرمان (CLI)
+
+- 🚀 **فوق‌العاده سبک و کم‌مصرف:** نوشته‌شده با زبان Go بدون تحمیل بار پردازشی به سیستم.
+- 🎯 **تست دسته‌ای واقعی (Real Verification):** اجرای تست پروتکل واقعی از طریق پروسه موقت sing-box و اعتبارسنجی عبور بسته از فایروال DPI.
+- ⚡ **الگوریتم Fast-Pass:** اتصال سریع به محض کشف اولین سرور زیر ۸۰۰ میلی‌ثانیه، و تکمیل پایش در پس‌زمینه.
+- 🇮🇷 **بایپس خودکار سایت‌های ایران:** عبور مستقیم و بدون فیلتر ترافیک سایت‌های داخلی (`.ir`، بانک‌ها، اسنپ، دیوار، دیجی‌کالا و ...) با ترافیک نیم‌بها.
+- 🔄 **واچ‌داگ و سوییچ خودکار (Auto-Failover):** شناسایی فوری افت سرعت یا مسدودی نود و جابه‌جایی بلادرنگ به سرور سالم بعدی.
+- 🔍 **اسکنر Clean-IP کلادفلر:** شناسایی خودکار بهترین IPهای تمیز کلادفلر متناسب با ارائه‌دهنده اینترنت (ISP) شما.
+
+---
+
+### 🚀 شروع سریع با ترمینال (CLI)
+
+**نصب سریع با اسکریپت یک‌خطی (macOS / Linux / Termux):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Mr-Meshky/vify-cli/main/scripts/install.sh | bash
 ```
 
-**نصب با Go:**
+**دستورات پرکاربرد:**
 ```bash
-go install github.com/Mr-Meshky/vify-cli@latest
-```
-
-**بیلد از سورس:**
-```bash
-git clone https://github.com/Mr-Meshky/vify-cli.git
-cd vify-cli
-make build
-# باینری در ./bin/vify ساخته می‌شه
-```
-
-### 🚀 شروع سریع و دستورات
-
-**۱. اتصال آنی (انتخاب خودکار بهترین سرور):**
-```bash
+# اتصال خودکار به سریع‌ترین نود (حالت پیش‌فرض TUN)
 vify connect
-```
 
-**۲. اتصال با فیلتر و گزینه‌های دلخواه:**
-```bash
-# اتصال به یه سرور VLESS آلمانی در حالت TUN (VPN کامل)
-vify connect --country DE --protocol vless --tun
+# اتصال بدون دسترسی روت (حالت System Proxy)
+vify connect --system-proxy
 
-# اتصال در حالت System Proxy با دسته‌ی تست بزرگ‌تر
-vify connect --country NL --batch 80
-```
+# اتصال با فیلتر کشور یا پروتکل دلخواه
+vify connect --country DE --protocol vless
 
-**۳. انتخاب تعاملی سرور (TUI):**
-```bash
+# انتخاب تعاملی سرور از لیست (TUI)
 vify list
-```
 
-**۴. بنچمارک و رتبه‌بندی تأخیر:**
-```bash
+# اجرای بنچمارک و رتبه‌بندی پینگ سرورها
 vify test --batch 50
-```
 
-**۵. بررسی وضعیت اتصال:**
-```bash
+# بررسی وضعیت زنده اتصال
 vify status
-```
 
-**۶. قطع اتصال و بازگردانی تنظیمات شبکه:**
-```bash
+# قطع اتصال و بازگردانی تنظیمات شبکه
 vify disconnect
-```
 
-**۷. پیدا کردن آی‌پی‌های تمیز کلادفلر:**
-```bash
+# اسکن آی‌پی‌های تمیز کلادفلر
 vify clean-ip --count 10
 ```
-
-> **نکته:** حالت TUN (پیش‌فرض `vify connect`) چون یه اینترفیس شبکه‌ی مجازی می‌سازه، نیاز به `sudo` داره:
-> ```bash
-> sudo vify connect
-> ```
-> اگه نمی‌خوای دسترسی root بدی، از حالت System Proxy استفاده کن که بدون sudo کار می‌کنه:
-> ```bash
-> vify connect --system-proxy
-> ```
-
-### ⚙️ پیکربندی (`~/.vify/config.yaml`)
-
-می‌تونی endpointهای subscription، پورت‌ها و timeoutها رو در `~/.vify/config.yaml` شخصی‌سازی کنی:
-
-```yaml
-subscriptions:
-  - "https://raw.githubusercontent.com/Mr-Meshky/vify/main/sub/all_normal.txt"
-  - "https://raw.githubusercontent.com/Mr-Meshky/vify/main/sub/reality_sub.txt"
-  - "https://raw.githubusercontent.com/Mr-Meshky/vify/main/sub/vless_sub.txt"
-  - "https://raw.githubusercontent.com/Mr-Meshky/vify/main/sub/vmess_sub.txt"
-  - "https://raw.githubusercontent.com/Mr-Meshky/vify/main/sub/trojan_sub.txt"
-  - "https://raw.githubusercontent.com/Mr-Meshky/vify/main/sub/ss_sub.txt"
-
-default_mode: "system_proxy" # "system_proxy" یا "tun"
-local_socks_port: 2080
-local_http_port: 2081
-test_timeout_ms: 2500
-concurrency_limit: 35
-fastpass_threshold_ms: 800
-test_url: "http://cp.cloudflare.com/generate_204"
-auto_failover: true
-watchdog_interval_sec: 7
-direct_iran_bypass: true
-log_level: "warn"
-```
-
-### 🏗️ معماری
-
-```
-                        ┌──────────────────────────────────────────────┐
-                        │              vify-cli (Cobra)                │
-                        │  connect | list | test | status | clean-ip   │
-                        └──────────────────────┬───────────────────────┘
-                                               │
-               ┌───────────────────────────────┼───────────────────────────────┐
-               │                               │                               │
-               ▼                               ▼                               ▼
-    ┌────────────────────┐          ┌────────────────────┐          ┌────────────────────┐
-    │  Subscription &    │          │ Concurrency Engine │          │ Interactive TUI    │
-    │  Config Parser     │          │ & Fast-Pass Tester │          │ (Bubble Tea /      │
-    │  (VLESS, VMess,    │          │ (Real HTTP/204 +   │          │  Lipgloss)         │
-    │   Trojan, SS)      │          │  Real-Proxy Verify)│          │                    │
-    └──────────┬─────────┘          └──────────┬─────────┘          └────────────────────┘
-               │                               │
-               └────────────────┬──────────────┘
-                                │
-                                ▼
-               ┌─────────────────────────────────┐
-               │         VPN Core Engine         │
-               │  - TUN Mode (sing-box / gVisor) │
-               │  - System Proxy Mode            │
-               │  - Smart Iran Bypass (.ir, etc) │
-               │  - Live Bandwidth / Stats       │
-               │  - Watchdog & Auto-Failover     │
-               └─────────────────────────────────┘
-```
-
-### 🛠️ کراس-کامپایل
-
-با `Makefile` می‌تونی برای همه‌ی پلتفرم‌های پشتیبانی‌شده بیلد بگیری:
-
-```bash
-make cross-build
-```
-
-باینری‌های تولیدشده در `./bin/`:
-- `vify-darwin-arm64` (مک اپل سیلیکون)
-- `vify-darwin-amd64` (مک اینتل)
-- `vify-linux-amd64` (لینوکس x86_64)
-- `vify-linux-arm64` (لینوکس ARM64 / رزبری‌پای / سرور)
-- `vify-windows-amd64.exe` (ویندوز x64)
-
-### 📄 لایسنس
-تحت [لایسنس MIT](LICENSE) منتشر شده.
-بخشی از **اکوسیستم ضدفیلترینگ Vify** ساخته‌ی [@Mr-Meshky](https://github.com/Mr-Meshky).
 
 ---
 
 <a id="english"></a>
-## 🇬🇧 English
+## 🇬🇧 English Documentation
 
-> **Blazing-Fast, Lightweight, Cross-Platform Terminal VPN Client in Go**
-> Connects Iranian users to free, high-speed, anti-censorship proxies fetched directly from the [Vify Ecosystem](https://github.com/Mr-Meshky/vify).
+> **Modern, Blazing-Fast, Multi-Platform Anti-Censorship Client — Powered by Go & Modern Flutter UI**  
+> Provides resilient, unrestricted internet connectivity for Iranian users by relaying through high-performance nodes from the [Vify Ecosystem](https://github.com/Mr-Meshky/vify).
 
-Works seamlessly on **macOS**, **Linux (Servers & Desktops)**, **Windows**, and **Android (Termux)**.
+---
 
-### 🌟 Highlights & Key Features
+### 🖥️ Desktop & Mobile GUI Features
 
-- 🚀 **Blazing-Fast & Lightweight:** Pure Go binary with minimal memory footprint and zero external bloat.
-- 🎯 **Client-Side Real-World Batch Testing:** Concurrently benchmarks candidate servers (20-50 goroutines) using real HTTP/204 endpoints (`cp.cloudflare.com` / `google.com`) and TLS handshakes to guarantee bypass through Iranian DPI (MCI, Irancell, Rightel, TCI, Shatel).
-- ✅ **Real Protocol Verification:** Unlike a plain TCP/TLS dial (which any open port passes), Vify spins up a short-lived, real sing-box process and performs an actual HTTP request through it before committing to a connection — nodes that don't genuinely relay traffic are rejected and the next best candidate is tried automatically.
-- ⚡ **Fast-Pass Instant Connection:** Automatically connects as soon as the first sub-800ms healthy node is verified, continuing background discovery without blocking.
-- 🇮🇷 **Smart Iran Domestic Direct Bypass:** Built-in direct routing rules for Iranian GeoIP (`geoip:ir`), GeoSite (`geosite:ir`), and domestic domains (`.ir`, banking, Shaparak, Digikala, Divar, Snapp) for full speed and half-price bandwidth.
-- 🛡️ **Dual Modes (TUN & System Proxy):**
-  - **TUN Mode (Full VPN):** Creates a virtual network interface and routes all device/system traffic (requires root/sudo).
-  - **System Proxy Mode:** Configures system-wide HTTP & SOCKS5 proxies without requiring root/sudo privileges.
-- 🎨 **Modern Terminal UI:** Built with [Charmbracelet Bubble Tea & Lipgloss](https://charm.sh) featuring live spinners, server country flags, and real-time upload/download speed gauges.
-- 🔄 **Auto-Failover Watchdog:** Detects DPI throttling or drops — both gradual (periodic health probes) and sudden (instant process-crash detection) — and fails over to the next healthy cached node automatically.
-- 🔍 **Cloudflare Clean-IP Scanner:** Randomly samples real Cloudflare CIDR ranges (not just a static list) to discover low-latency, zero-loss edge IPs tailored to your ISP.
-- 💾 **Offline Cache:** Saves healthy configs to `~/.vify/cache.json` for immediate connection during sudden network blackouts.
+- ⚡ **One-Tap Instant Connection:** Benchmarks and locks onto the fastest healthy node in sub-seconds.
+- 🎨 **State-of-the-Art Glassmorphism:** Sleek dark mode design, glowing status rings, and fluid micro-animations.
+- 📊 **Real-Time Speedometer:** Live gauges measuring download bandwidth, upload throughput, and ping latency.
+- 🛡️ **Instant Mode Switch:** Effortlessly switch between **TUN Mode (Full Virtual Adapter)** and **System Proxy (No root required)**.
+- 🌐 **Interactive Server Drawer:** Browse nodes categorized by country, protocol, and verified round-trip ping.
+- 📥 **System Tray & Menu Bar Resident:** Runs quietly in the background without dropping VPN sessions when the window is closed.
 
-### 📦 Installation
+---
 
-**Quick One-Line Script (macOS / Linux / Termux):**
+### ⚡ CLI & Core Capabilities
+
+- 🚀 **High Performance, Zero Dependencies:** Pure Go core engineered for minimal CPU and memory footprints.
+- 🎯 **Real-World Protocol Verification:** Spins up an ephemeral sing-box instance and transmits verified HTTP/204 payloads to defeat deep packet inspection (DPI).
+- ⚡ **Fast-Pass Instant Connection:** Triggers connection upon verifying the first node under 800ms, continuing discovery asynchronously.
+- 🇮🇷 **Smart Iran Domestic Bypass:** Direct routing for Iranian GeoIP (`geoip:ir`), GeoSite (`geosite:ir`), and domestic domains (`.ir`, banks, local apps) ensuring half-price bandwidth and full ISP speed.
+- 🔄 **Continuous Watchdog & Auto-Failover:** Automatically detects ISP throttling or server dropouts and reroutes through the next best node without manual intervention.
+- 🔍 **Cloudflare Clean-IP Discovery:** Randomly samples active Cloudflare edge subnets to locate the lowest-latency IP for your current provider.
+
+---
+
+### 🚀 CLI Quick Start
+
+**One-Line Installer (macOS / Linux / Termux):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Mr-Meshky/vify-cli/main/scripts/install.sh | bash
 ```
 
-**Go Install:**
+**Common Commands:**
 ```bash
-go install github.com/Mr-Meshky/vify-cli@latest
-```
-
-**Build from Source:**
-```bash
-git clone https://github.com/Mr-Meshky/vify-cli.git
-cd vify-cli
-make build
-# Binary will be placed in ./bin/vify
-```
-
-### 🚀 Quick Start & Commands
-
-**1. Connect Immediately (Auto-Select Best Server):**
-```bash
+# Instant auto-connect to lowest latency server
 vify connect
-```
 
-**2. Connect with Filters & Options:**
-```bash
-# Connect to a German VLESS server in TUN (Full VPN) mode
-vify connect --country DE --protocol vless --tun
+# Connect in System Proxy mode (no root/sudo needed)
+vify connect --system-proxy
 
-# Connect in System Proxy mode with a larger test batch
-vify connect --country NL --batch 80
-```
+# Filter by country or protocol
+vify connect --country DE --protocol vless
 
-**3. Interactive Server Selection (TUI):**
-```bash
+# Interactive terminal dashboard
 vify list
-```
 
-**4. Benchmark & Latency Leaderboard:**
-```bash
+# Benchmark latency leaderboard
 vify test --batch 50
-```
 
-**5. Check Connection Status:**
-```bash
+# Check connection status & live throughput
 vify status
-```
 
-**6. Disconnect & Restore Network Settings:**
-```bash
+# Disconnect and reset network routes
 vify disconnect
-```
 
-**7. Find Cloudflare Clean IPs:**
-```bash
+# Discover optimized Cloudflare Clean IPs
 vify clean-ip --count 10
 ```
 
-> **Note:** TUN mode (the default for `vify connect`) creates a virtual network interface, so it requires `sudo`:
-> ```bash
-> sudo vify connect
-> ```
-> If you'd rather not grant root access, use System Proxy mode instead — no sudo required:
-> ```bash
-> vify connect --system-proxy
-> ```
+---
 
 ### ⚙️ Configuration (`~/.vify/config.yaml`)
 
-You can customize subscription endpoints, ports, and timeouts in `~/.vify/config.yaml`:
+You can customize subscription endpoints, ports, and watchdog thresholds in `~/.vify/config.yaml`:
 
 ```yaml
 subscriptions:
@@ -297,52 +198,9 @@ direct_iran_bypass: true
 log_level: "warn"
 ```
 
-### 🏗️ Architecture
-
-```
-                        ┌──────────────────────────────────────────────┐
-                        │              vify-cli (Cobra)                │
-                        │  connect | list | test | status | clean-ip   │
-                        └──────────────────────┬───────────────────────┘
-                                               │
-               ┌───────────────────────────────┼───────────────────────────────┐
-               │                               │                               │
-               ▼                               ▼                               ▼
-    ┌────────────────────┐          ┌────────────────────┐          ┌────────────────────┐
-    │  Subscription &    │          │ Concurrency Engine │          │ Interactive TUI    │
-    │  Config Parser     │          │ & Fast-Pass Tester │          │ (Bubble Tea /      │
-    │  (VLESS, VMess,    │          │ (Real HTTP/204 +   │          │  Lipgloss)         │
-    │   Trojan, SS)      │          │  Real-Proxy Verify)│          │                    │
-    └──────────┬─────────┘          └──────────┬─────────┘          └────────────────────┘
-               │                               │
-               └────────────────┬──────────────┘
-                                │
-                                ▼
-               ┌─────────────────────────────────┐
-               │         VPN Core Engine         │
-               │  - TUN Mode (sing-box / gVisor) │
-               │  - System Proxy Mode            │
-               │  - Smart Iran Bypass (.ir, etc) │
-               │  - Live Bandwidth / Stats       │
-               │  - Watchdog & Auto-Failover     │
-               └─────────────────────────────────┘
-```
-
-### 🛠️ Cross-Compilation
-
-Use the included `Makefile` to compile binaries for all supported platforms:
-
-```bash
-make cross-build
-```
-
-Generated binaries in `./bin/`:
-- `vify-darwin-arm64` (macOS Apple Silicon)
-- `vify-darwin-amd64` (macOS Intel)
-- `vify-linux-amd64` (Linux x86_64)
-- `vify-linux-arm64` (Linux ARM64 / Raspberry Pi / Servers)
-- `vify-windows-amd64.exe` (Windows x64)
+---
 
 ### 📄 License
-Released under the [MIT License](LICENSE).
+
+Distributed under the [MIT License](LICENSE).  
 Part of the **Vify Anti-Censorship Ecosystem** by [@Mr-Meshky](https://github.com/Mr-Meshky).

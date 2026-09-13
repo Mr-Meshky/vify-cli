@@ -7,6 +7,8 @@ class ProxyNodeModel {
   final String countryFlag;
   final int latencyMs;
 
+  final String rawUri;
+
   ProxyNodeModel({
     required this.name,
     required this.server,
@@ -15,7 +17,30 @@ class ProxyNodeModel {
     required this.country,
     required this.countryFlag,
     required this.latencyMs,
+    this.rawUri = '',
   });
+
+  ProxyNodeModel copyWith({
+    String? name,
+    String? server,
+    int? port,
+    String? protocol,
+    String? country,
+    String? countryFlag,
+    int? latencyMs,
+    String? rawUri,
+  }) {
+    return ProxyNodeModel(
+      name: name ?? this.name,
+      server: server ?? this.server,
+      port: port ?? this.port,
+      protocol: protocol ?? this.protocol,
+      country: country ?? this.country,
+      countryFlag: countryFlag ?? this.countryFlag,
+      latencyMs: latencyMs ?? this.latencyMs,
+      rawUri: rawUri ?? this.rawUri,
+    );
+  }
 
   factory ProxyNodeModel.fromJson(Map<String, dynamic> json) {
     int latency = 0;
@@ -34,6 +59,7 @@ class ProxyNodeModel {
       country: json['country'] ?? 'GLOBAL',
       countryFlag: json['country_flag'] ?? '🌐',
       latencyMs: latency,
+      rawUri: json['raw_uri'] ?? json['rawUri'] ?? '',
     );
   }
 }
@@ -43,52 +69,4 @@ enum VpnConnectionState {
   connecting,
   connected,
   error,
-}
-
-enum VpnTargetMode {
-  fastPass,
-  aiGemini,
-  streaming,
-  gaming,
-}
-
-extension VpnTargetModeExtension on VpnTargetMode {
-  String get label {
-    switch (this) {
-      case VpnTargetMode.fastPass:
-        return 'Fast Pass';
-      case VpnTargetMode.aiGemini:
-        return 'AI & Gemini';
-      case VpnTargetMode.streaming:
-        return 'Streaming';
-      case VpnTargetMode.gaming:
-        return 'Gaming';
-    }
-  }
-
-  String get icon {
-    switch (this) {
-      case VpnTargetMode.fastPass:
-        return '⚡';
-      case VpnTargetMode.aiGemini:
-        return '🤖';
-      case VpnTargetMode.streaming:
-        return '🎬';
-      case VpnTargetMode.gaming:
-        return '🎮';
-    }
-  }
-
-  String get targetParam {
-    switch (this) {
-      case VpnTargetMode.fastPass:
-        return '';
-      case VpnTargetMode.aiGemini:
-        return 'gemini';
-      case VpnTargetMode.streaming:
-        return 'streaming';
-      case VpnTargetMode.gaming:
-        return 'gaming';
-    }
-  }
 }

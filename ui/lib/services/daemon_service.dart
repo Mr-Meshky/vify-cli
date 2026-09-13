@@ -126,7 +126,6 @@ class DaemonService {
   }
 
   Future<bool> connect({
-    VpnTargetMode target = VpnTargetMode.fastPass,
     String country = '',
     String protocol = '',
     String mode = 'tun',
@@ -137,7 +136,6 @@ class DaemonService {
         Uri.parse('$baseUrl/api/connect'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'target': target.targetParam,
           'country': country,
           'protocol': protocol,
           'mode': mode,
