@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import '../models/vpn_models.dart';
 import '../services/android_vpn_service.dart';
 import '../services/daemon_service.dart';
+import '../services/ping_service.dart';
 import '../services/subscription_service.dart';
 
 class VpnProvider extends ChangeNotifier {
   final DaemonService _daemonService = DaemonService();
   final AndroidVpnService _androidVpnService = AndroidVpnService();
   final SubscriptionService _subService = SubscriptionService();
+  final PingService _pingService = PingService();
 
   VpnConnectionState _state = VpnConnectionState.disconnected;
   ProxyNodeModel? _currentNode;
@@ -24,6 +26,7 @@ class VpnProvider extends ChangeNotifier {
 
   List<ProxyNodeModel> _nodes = [];
   Timer? _pollingTimer;
+  bool _isTestingPing = false;
 
   VpnConnectionState get state => _state;
   ProxyNodeModel? get currentNode => _currentNode;
@@ -35,6 +38,7 @@ class VpnProvider extends ChangeNotifier {
   bool get isTunMode => _isTunMode;
   bool get isDaemonConnected => _isDaemonConnected;
   List<ProxyNodeModel> get nodes => _nodes;
+  bool get isTestingPing => _isTestingPing;
 
   bool get isConnected => _state == VpnConnectionState.connected;
   bool get isConnecting => _state == VpnConnectionState.connecting;
@@ -118,10 +122,6 @@ class VpnProvider extends ChangeNotifier {
         targetNode = _subService.parseRawUri(rawUrl);
       }
 
-      if (targetNode == null && _currentNode != null) {
-        targetNode = _currentNode;
-      }
-
       if (targetNode == null) {
         if (_nodes.isEmpty) {
           _statusMessage = 'Fetching servers...';
@@ -130,19 +130,30 @@ class VpnProvider extends ChangeNotifier {
         }
 
         if (_nodes.isNotEmpty) {
-          targetNode = _nodes.first;
+          _statusMessage = 'Finding fastest server...';
+          notifyListeners();
+
+          final best = await _pingService.findFastestWorkingNode(
+            _nodes,
+            onProgress: (msg) {
+              _statusMessage = msg;
+              notifyListeners();
+            },
+          );
+          targetNode = best;
         }
       }
 
       if (targetNode == null || targetNode.rawUri.isEmpty) {
         _state = VpnConnectionState.error;
         _statusMessage = 'No Servers Available';
-        _lastError = 'Could not find any proxy server to connect to.';
+        _lastError = 'Could not find any working proxy server.';
         notifyListeners();
         return;
       }
 
       _currentNode = targetNode;
+      _latencyMs = targetNode.latencyMs;
       _statusMessage = 'Connecting to ${targetNode.name}...';
       notifyListeners();
 
@@ -212,6 +223,32 @@ class VpnProvider extends ChangeNotifier {
     _uploadSpeed = 0;
     _latencyMs = 0;
     notifyListeners();
+  }
+
+  Future<void> testAllServers() async {
+    if (_isTestingPing) return;
+    _isTestingPing = true;
+    notifyListeners();
+
+    try {
+      if (_nodes.isEmpty) {
+        await fetchNodes();
+      }
+      final sorted = await _pingService.benchmarkAllNodes(
+        _nodes,
+        onProgress: (completed, total) {
+          notifyListeners();
+        },
+      );
+      if (sorted.isNotEmpty) {
+        _nodes = sorted;
+      }
+    } catch (e) {
+      debugPrint('Error testing all servers: $e');
+    } finally {
+      _isTestingPing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> fetchNodes() async {

@@ -135,6 +135,20 @@ class _ServerBottomSheetState extends State<ServerBottomSheet> {
                 Row(
                   children: [
                     IconButton(
+                      icon: vpn.isTestingPing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: VifyTheme.neonAmber,
+                              ),
+                            )
+                          : const Icon(Icons.bolt, size: 22, color: VifyTheme.neonAmber),
+                      onPressed: vpn.isTestingPing ? null : () => vpn.testAllServers(),
+                      tooltip: 'تست پینگ و مرتب‌سازی سرورها',
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.add_link, size: 22, color: VifyTheme.neonCyan),
                       onPressed: _showAddConfigDialog,
                       tooltip: 'Import Custom Config',
@@ -149,6 +163,20 @@ class _ServerBottomSheetState extends State<ServerBottomSheet> {
               ],
             ),
           ),
+
+          // Ping testing progress bar
+          if (vpn.isTestingPing)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+              child: ClipRRect(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: VifyTheme.bgCard,
+                  valueColor: AlwaysStoppedAnimation<Color>(VifyTheme.neonAmber),
+                ),
+              ),
+            ),
 
           // Search Bar
           Padding(
@@ -215,7 +243,7 @@ class _ServerBottomSheetState extends State<ServerBottomSheet> {
                               ),
                             ),
                             Text(
-                              'Automatically benchmark & connect to fastest server',
+                              'تست بلادرنگ و اتصال سریع به بهترین سرور سالم',
                               style: TextStyle(fontSize: 11, color: VifyTheme.textSecondary),
                             ),
                           ],
@@ -291,9 +319,11 @@ class _ServerBottomSheetState extends State<ServerBottomSheet> {
                                     color: VifyTheme.bgSurface,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: node.latencyMs < 200
+                                      color: node.latencyMs < 350
                                           ? VifyTheme.neonEmerald.withAlpha(60)
-                                          : VifyTheme.neonAmber.withAlpha(60),
+                                          : (node.latencyMs < 700
+                                              ? VifyTheme.neonAmber.withAlpha(60)
+                                              : Colors.redAccent.withAlpha(60)),
                                     ),
                                   ),
                                   child: Text(
@@ -301,13 +331,34 @@ class _ServerBottomSheetState extends State<ServerBottomSheet> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      color: node.latencyMs < 200
+                                      color: node.latencyMs < 350
                                           ? VifyTheme.neonEmerald
-                                          : VifyTheme.neonAmber,
+                                          : (node.latencyMs < 700
+                                              ? VifyTheme.neonAmber
+                                              : Colors.redAccent),
                                     ),
                                   ),
                                 )
-                              : const Icon(Icons.arrow_forward_ios, size: 12, color: VifyTheme.textMuted),
+                              : (node.latencyMs < 0
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: VifyTheme.bgSurface,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: Colors.redAccent.withAlpha(40),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Timeout',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    )
+                                  : const Icon(Icons.arrow_forward_ios, size: 12, color: VifyTheme.textMuted)),
                           onTap: () {
                             Navigator.pop(context);
                             vpn.connect(preselectedNode: node);
