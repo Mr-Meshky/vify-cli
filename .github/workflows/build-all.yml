@@ -137,6 +137,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/Vify.app/Contents/MacOS/vify"
           chmod +x "$RELEASE_DIR/Vify.app/Contents/MacOS/vify"
           cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/"
+
+          # Re-sign the app bundle recursively because files were modified after flutter build
+          codesign --force --deep --sign - "$RELEASE_DIR/Vify.app"
           
           # Create ZIP archive
           cd "$RELEASE_DIR"

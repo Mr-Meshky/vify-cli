@@ -35,7 +35,7 @@
 | :--- | :--- | :--- | :--- |
 | 🤖 **Android (Universal)** | 📱 اپلیکیشن موبایل | `.apk` (Universal) | نصب فایل APK روی تمام گوشی‌های اندرویدی (Android 7+) |
 | 🤖 **Android (ARM64)** | 📱 اپلیکیشن بهینه | `.apk` (arm64-v8a) | نسخه کم‌حجم‌تر مخصوص پردازنده‌های ۶۴ بیتی مدرن |
-| 🍏 **macOS** (Universal) | 🖥️ Desktop GUI | `.dmg` / `.zip` | نصب فایل DMG و کشیدن `Vify.app` به پوشه Applications |
+| 🍏 **macOS** (Universal) | 🖥️ Desktop GUI | `.dmg` / `.zip` | نصب فایل DMG یا انتقال `Vify.app` به Applications (در صورت خطای damaged: `xattr -cr /Applications/Vify.app`) |
 | 🪟 **Windows** (x64) | 🖥️ Desktop GUI | Setup `.exe` / `.zip` | نصب خودکار با اینستالر یا اجرای پرتابل `Vify.exe` |
 | 🐧 **Linux** (x86_64) | 🖥️ Desktop GUI | `.deb` / `.tar.gz` | نصب با `sudo dpkg -i` در اوبونتو/دبیان یا اجرای باینری `vify-ui` |
 | 💻 **Linux CLI** (x86_64) | ⚡ ترمینال CLI | باینری مستقل | `chmod +x vify-cli-linux-amd64 && ./vify-cli-linux-amd64` |
@@ -161,6 +161,13 @@ vify disconnect
 <details>
 <summary><b>۴. چگونه آدرس سابسکریپشن‌های اختصاصی خود را وارد کنم؟</b></summary>
 در نسخه CLI می‌توانید فایل <code>~/.vify/config.yaml</code> را ویرایش کنید. در نسخه موبایل و دسکتاپ نیز می‌توانید لینک‌های خام کانفیگ‌ها را مستقیماً از طریق دکمه Import در دراور سرورها اضافه فرمایید.
+</details>
+
+<details>
+<summary><b>۵. در مک با ارور “Vify is damaged and can’t be opened” مواجه می‌شوم، چه کنم؟</b></summary>
+این پیام امنیتی Gatekeeper مک برای برنامه‌های اوپن‌سورس و بدون امضای تجاری اپل است. پس از کپی کردن برنامه به پوشه Applications، کافی است ترمینال مک (Terminal) را باز کرده و این دستور تک‌خطی را اجرا کنید:
+<pre><code>xattr -cr /Applications/Vify.app</code></pre>
+سپس برنامه به راحتی و بدون هیچ خطایی اجرا می‌شود.
 </details>
 
 ---
