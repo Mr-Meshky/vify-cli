@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import '../providers/vpn_provider.dart';
+import '../services/update_service.dart';
 import '../services/window_service.dart';
 import '../theme/vify_theme.dart';
+import 'update_dialog.dart';
 
 class CustomTitleBar extends StatelessWidget {
   const CustomTitleBar({super.key});
@@ -177,6 +179,39 @@ class CustomTitleBar extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+
+          const SizedBox(width: 4),
+
+          // Check for Updates Button
+          IconButton(
+            icon: const Icon(Icons.cloud_sync_outlined, size: 19, color: VifyTheme.textSecondary),
+            tooltip: 'بررسی به‌روزرسانی (Check Updates)',
+            splashRadius: 18,
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('در حال بررسی نسخه جدید...'),
+                  duration: Duration(milliseconds: 1500),
+                ),
+              );
+              final update = await UpdateService().checkForUpdate(force: true);
+              if (!context.mounted) return;
+              if (update != null && update.isUpdateAvailable) {
+                UpdateDialog.show(context, update);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      update != null
+                          ? 'برنامه به‌روز است (${update.latestVersion})'
+                          : 'خطا در برقراری ارتباط با گیت‌هاب',
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
           ),
 
           // Window Controls (Only on Windows / Linux)

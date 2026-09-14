@@ -116,21 +116,38 @@ class VpnProvider extends ChangeNotifier {
       _statusMessage = 'Preparing VPN...';
       notifyListeners();
 
-      ProxyNodeModel? targetNode = preselectedNode;
+      ProxyNodeModel? targetNode;
 
       if (rawUrl.isNotEmpty) {
         targetNode = _subService.parseRawUri(rawUrl);
+      } else if (preselectedNode != null) {
+        _statusMessage = 'اعتبارسنجی ترافیک سرور...';
+        notifyListeners();
+        final realDelay = await _androidVpnService.getDelay(preselectedNode.rawUri);
+        if (realDelay > 0) {
+          targetNode = preselectedNode.copyWith(latencyMs: realDelay);
+        } else {
+          _statusMessage = 'سرور انتخابی اینترنت نداشت، در حال یافتن سرور سالم...';
+          notifyListeners();
+          targetNode = await _pingService.findFastestWorkingNode(
+            _nodes,
+            onProgress: (msg) {
+              _statusMessage = msg;
+              notifyListeners();
+            },
+          );
+        }
       }
 
       if (targetNode == null) {
         if (_nodes.isEmpty) {
-          _statusMessage = 'Fetching servers...';
+          _statusMessage = 'دریافت سرورها...';
           notifyListeners();
           _nodes = await _subService.fetchAllNodes();
         }
 
         if (_nodes.isNotEmpty) {
-          _statusMessage = 'Finding fastest server...';
+          _statusMessage = 'جستجوی سرور با اینترنت فعال...';
           notifyListeners();
 
           final best = await _pingService.findFastestWorkingNode(
@@ -146,8 +163,8 @@ class VpnProvider extends ChangeNotifier {
 
       if (targetNode == null || targetNode.rawUri.isEmpty) {
         _state = VpnConnectionState.error;
-        _statusMessage = 'No Servers Available';
-        _lastError = 'Could not find any working proxy server.';
+        _statusMessage = 'سرور فعالی یافت نشد';
+        _lastError = 'هیچ سروری با اینترنت فعال پیدا نشد. لطفاً از دراور سرورها لیست را رفرش کنید.';
         notifyListeners();
         return;
       }

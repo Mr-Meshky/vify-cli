@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Mr-Meshky/vify-cli/internal/tui"
+	"github.com/Mr-Meshky/vify-cli/internal/updater"
 	"github.com/spf13/cobra"
 )
 
@@ -30,4 +31,15 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vify/config.yaml)")
 	rootCmd.Version = version
+
+	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		if cmd.Name() == "update" || cmd.Name() == "help" {
+			return
+		}
+		// Non-blocking check using local cache (only hits network if cache expired)
+		if release, isNewer, err := updater.CheckUpdate(version, false); err == nil && isNewer && release != nil {
+			fmt.Println(updater.RenderUpdateNotification(version, release.TagName))
+		}
+	}
 }
+

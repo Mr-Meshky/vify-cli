@@ -91,16 +91,35 @@ class AndroidVpnService {
     }
   }
 
-  Future<int> getDelay(String rawUri) async {
+  Future<int> getDelay(String rawUri, {Duration timeout = const Duration(milliseconds: 3800)}) async {
     if (!Platform.isAndroid || _flutterV2ray == null) return -1;
     try {
       final parser = FlutterV2ray.parseFromURL(rawUri);
       final config = parser.getFullConfiguration();
-      return await _flutterV2ray!.getServerDelay(
+
+      // Test using HTTP generate_204 (standard captive portal check, avoids TLS nested SNI blocks)
+      final delayFuture = _flutterV2ray!.getServerDelay(
         config: config,
-        url: 'https://cp.cloudflare.com/generate_204',
+        url: 'http://cp.cloudflare.com/generate_204',
       );
+
+      int delay = await delayFuture.timeout(timeout, onTimeout: () => -1);
+
+      // If Cloudflare endpoint timed out or was blocked, fallback to Google/Gstatic
+      if (delay <= 0) {
+        final fallbackFuture = _flutterV2ray!.getServerDelay(
+          config: config,
+          url: 'http://www.gstatic.com/generate_204',
+        );
+        delay = await fallbackFuture.timeout(
+          const Duration(milliseconds: 2500),
+          onTimeout: () => -1,
+        );
+      }
+
+      return delay;
     } catch (e) {
+      debugPrint('Error getting real delay for node: $e');
       return -1;
     }
   }
