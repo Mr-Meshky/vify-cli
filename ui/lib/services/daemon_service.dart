@@ -10,39 +10,69 @@ class DaemonService {
 
   static String findVifyBinary() {
     try {
+      final currentExe = File(Platform.resolvedExecutable).resolveSymbolicLinksSync().toLowerCase();
       final appDir = File(Platform.resolvedExecutable).parent.path;
+
+      // Candidate helper binaries (dedicated locations, never the GUI executable)
       final exeCandidates = [
-        '$appDir/vify',
-        '$appDir/vify.exe',
-        '$appDir/bin/vify.exe',
-        '$appDir/vify-cli.exe',
+        // macOS bundle helper location
         '$appDir/../Resources/vify',
+        // Windows dedicated CLI/daemon names
+        '$appDir/vify-cli.exe',
+        '$appDir/bin/vify.exe',
+        // Linux/Unix dedicated CLI/daemon names
+        '$appDir/bin/vify',
+        '$appDir/vify-cli',
+        '$appDir/vify-daemon',
       ];
       for (final p in exeCandidates) {
-        if (File(p).existsSync()) return p;
+        final f = File(p);
+        if (f.existsSync()) {
+          try {
+            if (f.resolveSymbolicLinksSync().toLowerCase() != currentExe) {
+              return p;
+            }
+          } catch (_) {
+            return p;
+          }
+        }
       }
     } catch (_) {}
 
-    final home = Platform.environment['HOME'] ?? '';
+    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '';
     final candidates = [
       '$home/.local/bin/vify',
+      '$home/.local/bin/vify.exe',
       '/usr/local/bin/vify',
       '/opt/homebrew/bin/vify',
       '/opt/vify/vify',
       '/usr/bin/vify',
     ];
     for (final p in candidates) {
-      if (File(p).existsSync()) return p;
+      final f = File(p);
+      if (f.existsSync()) {
+        try {
+          final currentExe = File(Platform.resolvedExecutable).resolveSymbolicLinksSync().toLowerCase();
+          if (f.resolveSymbolicLinksSync().toLowerCase() != currentExe) {
+            return p;
+          }
+        } catch (_) {
+          return p;
+        }
+      }
     }
     try {
       final whichCmd = Platform.isWindows ? 'where' : 'which';
       final res = Process.runSync(whichCmd, ['vify']);
       final out = res.stdout.toString().trim().split('\n').first.trim();
       if (res.exitCode == 0 && out.isNotEmpty && File(out).existsSync()) {
-        return out;
+        final currentExe = File(Platform.resolvedExecutable).resolveSymbolicLinksSync().toLowerCase();
+        if (File(out).resolveSymbolicLinksSync().toLowerCase() != currentExe) {
+          return out;
+        }
       }
     } catch (_) {}
-    return Platform.isWindows ? 'vify.exe' : 'vify';
+    return Platform.isWindows ? 'vify-cli.exe' : 'vify';
   }
 
   Future<bool> isDaemonRunning() async {
