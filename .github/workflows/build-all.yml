@@ -2,10 +2,7 @@ name: Build & Release Vify (All Platforms)
 
 on:
   push:
-    branches: [ "main" ]
     tags: [ "v*" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
