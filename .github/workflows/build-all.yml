@@ -133,9 +133,9 @@ jobs:
             cp "$GITHUB_WORKSPACE/ui/macos/Runner/AppIcon.icns" "$RELEASE_DIR/Vify.app/Contents/Resources/AppIcon.icns"
           fi
 
-          # Embed CLI binary inside Vify.app bundle as well as release dir
-          cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/Vify.app/Contents/MacOS/vify"
-          chmod +x "$RELEASE_DIR/Vify.app/Contents/MacOS/vify"
+          # Embed CLI binary inside Vify.app Resources (avoiding case-insensitive collision with Contents/MacOS/Vify) as well as release dir
+          cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/Vify.app/Contents/Resources/vify"
+          chmod +x "$RELEASE_DIR/Vify.app/Contents/Resources/vify"
           cp "$GITHUB_WORKSPACE/bin/vify" "$RELEASE_DIR/"
 
           # Re-sign the app bundle recursively because files were modified after flutter build
